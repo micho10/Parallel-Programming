@@ -70,7 +70,7 @@ class IndexedColorFilter(initialImage: Img,
               (p.z >= (b.toDouble / 255)) &&
               (p.z <= ((b.toDouble + sep) / 255))
 
-            val pts = points.filter(inside(_))
+            val pts = points.filter(inside)
             val cnt = pts.size * 3 * numColors / points.size
             if (cnt >= 1) {
               val d = pts.size / cnt
