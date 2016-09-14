@@ -63,11 +63,13 @@ class KMeans {
   }
 
   def update(classified: GenMap[Point, GenSeq[Point]], oldMeans: GenSeq[Point]): GenSeq[Point] = {
-    ???
+    oldMeans.par.map( oldMean => findAverage(oldMean, classified(oldMean)))
   }
 
   def converged(eta: Double)(oldMeans: GenSeq[Point], newMeans: GenSeq[Point]): Boolean = {
-    ???
+    (oldMeans zip newMeans).forall{
+      case (oldMean, newMean) => oldMean.squareDistance(newMean) <= eta
+    }
   }
 
   @tailrec
