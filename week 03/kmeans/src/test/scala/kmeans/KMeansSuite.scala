@@ -71,7 +71,44 @@ class KMeansSuite extends FunSuite {
     checkParClassify(points, means, expected)
   }
 
+  def checkKMeans(points: GenSeq[Point], means: GenSeq[Point], eta: Double, expected: GenSeq[Point]) {
+    assert(kMeans(points, means, eta) == expected,
+      s"kMeans($points, $means) should equal to $expected")
+  }
+
+  /*
+  [Test Description]
+  'kMeans' should work for 'points' == GenSeq((0, 0, 1), (0,0, -1), (0,1,0), (0,10,0)) and
+  'oldMeans' == GenSeq((0, -1, 0), (0, 2, 0)) and 'eta' == 12.25
+  [Observed Error]
+  Util.equalPointSeq(KM.kMeans(points, means, eta), expected) was false
+  KMeans(Vector((0.0, 0.0, 1.0), (0.0, 0.0, -1.0), (0.0, 1.0, 0.0), (0.0, 10.0, 0.0)), means) should equal to
+  Vector((0.0, 0.0, 0.0), (0.0, 5.5, 0.0))
+  */
+  test("'kMeans' should work for 'points' == GenSeq((0, 0, 1), (0, 0, -1), (0, 1, 0), (0, 10, 0)) and " +
+    "'oldMeans' == GenSeq((0, -1, 0), (0, 2, 0)) and 'eta' == 12.25") {
+    val p1 = new Point(0, 0, 1)
+    val p2 = new Point(0, 0, -1)
+    val p3 = new Point(0, 10, 0)
+    val points: GenSeq[Point] = IndexedSeq(p1, p2, p3)
+    val mean1 = new Point(0, -1, 0)
+    val mean2 = new Point(0, 2, 0)
+    val oldMeans: GenSeq[Point] = IndexedSeq(mean1, mean2)
+    val eta = 12.25
+    val expected = GenSeq(new Point(0, 0, 0), new Point(0, 5.5, 0))
+    checkKMeans(points, oldMeans, eta, expected)
+  }
+
+/*
+[Test Description]
+'kMeans' should work for 800k points in a sequence separated in 8 spherical clusters where each cluster is in
+one octant
+[Observed Error]
+test has been aborted
+*/
+
+
 }
 
 
-  
+
