@@ -12,11 +12,20 @@ import common._
 class Simulator(val taskSupport: TaskSupport, val timeStats: TimeStatistics) {
 
   def updateBoundaries(boundaries: Boundaries, body: Body): Boundaries = {
-    ???
+    boundaries.minX = body.x min boundaries.minX
+    boundaries.maxX = body.x max boundaries.maxX
+    boundaries.minY = body.y min boundaries.minY
+    boundaries.maxY = body.y max boundaries.maxY
+    boundaries
   }
 
   def mergeBoundaries(a: Boundaries, b: Boundaries): Boundaries = {
-    ???
+    val merged = new Boundaries
+    merged.minX = a.minX min b.minX
+    merged.maxX = a.maxX max b.maxX
+    merged.minY = a.minY min b.minY
+    merged.maxY = a.maxY max b.maxY
+    merged
   }
 
   def computeBoundaries(bodies: Seq[Body]): Boundaries = timeStats.timed("boundaries") {
@@ -28,7 +37,10 @@ class Simulator(val taskSupport: TaskSupport, val timeStats: TimeStatistics) {
   def computeSectorMatrix(bodies: Seq[Body], boundaries: Boundaries): SectorMatrix = timeStats.timed("matrix") {
     val parBodies = bodies.par
     parBodies.tasksupport = taskSupport
-    ???
+    parBodies.aggregate(new SectorMatrix(boundaries, SECTOR_PRECISION))(
+      {case (sectorMatrix, body) => sectorMatrix += body},
+      {case (sectorMatrixLeft, sectorMatrixRight) => sectorMatrixLeft combine sectorMatrixRight}
+    )
   }
 
   def computeQuad(sectorMatrix: SectorMatrix): Quad = timeStats.timed("quad") {
@@ -38,7 +50,7 @@ class Simulator(val taskSupport: TaskSupport, val timeStats: TimeStatistics) {
   def updateBodies(bodies: Seq[Body], quad: Quad): Seq[Body] = timeStats.timed("update") {
     val parBodies = bodies.par
     parBodies.tasksupport = taskSupport
-    ???
+    parBodies map (body => body.updated(quad)) toIndexedSeq
   }
 
   def eliminateOutliers(bodies: Seq[Body], sectorMatrix: SectorMatrix, quad: Quad): Seq[Body] = timeStats.timed("eliminate") {
@@ -54,7 +66,7 @@ class Simulator(val taskSupport: TaskSupport, val timeStats: TimeStatistics) {
         // object is moving away from the center of the mass
         if (relativeSpeed < 0) {
           val escapeSpeed = math.sqrt(2 * gee * quad.mass / d)
-          // object has the espace velocity
+          // object has the escape velocity
           -relativeSpeed > 2 * escapeSpeed
         } else false
       } else false
