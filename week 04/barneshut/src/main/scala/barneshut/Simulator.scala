@@ -50,7 +50,7 @@ class Simulator(val taskSupport: TaskSupport, val timeStats: TimeStatistics) {
       if (d > eliminationThreshold * sectorMatrix.boundaries.size) {
         val nx = dx / d
         val ny = dy / d
-        val relativeSpeed = b.xspeed * nx + b.yspeed * ny
+        val relativeSpeed = b.xSpeed * nx + b.ySpeed * ny
         // object is moving away from the center of the mass
         if (relativeSpeed < 0) {
           val escapeSpeed = math.sqrt(2 * gee * quad.mass / d)
