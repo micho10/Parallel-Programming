@@ -53,8 +53,8 @@ package object barneshut {
 
   case class Fork(nw: Quad, ne: Quad, sw: Quad, se: Quad) extends Quad {
     val quads = Seq(nw, ne, sw, se)
-    val centerX: Float = nw.size
-    val centerY: Float = nw.size
+    val centerX: Float = (nw.centerX + ne.centerX) / 2
+    val centerY: Float = (nw.centerY + sw.centerY) / 2
     val size: Float = nw.size * 2
     val mass: Float = quads.foldLeft(0f)(_ + _.mass)
     val massX: Float = if (mass == 0) centerX else quads.foldLeft(0f){ case (sum, quad) => sum + quad.mass * quad.massX } / mass
@@ -75,11 +75,9 @@ package object barneshut {
 
   case class Leaf(centerX: Float, centerY: Float, size: Float, bodies: Seq[Body])
   extends Quad {
-    val (mass, massX, massY) = (
-      bodies.foldLeft(0f)(_ + _.mass) : Float,
-      bodies.foldLeft(0f){ case (sum, b) => sum + b.mass * b.x } : Float,
-      bodies.foldLeft(0f){ case (sum, b) => sum + b.mass * b.y } : Float
-    )
+    val mass  = bodies.foldLeft(0f)(_ + _.mass)
+    val massX = bodies.foldLeft(0f){ case (sum, b) => sum + b.mass * b.x } / mass
+    val massY = bodies.foldLeft(0f){ case (sum, b) => sum + b.mass * b.y } / mass
     val total: Int = bodies.length
     def insert(b: Body): Quad =
       if (size > minimumSize) {
@@ -112,7 +110,7 @@ package object barneshut {
     math.sqrt((x1 - x0) * (x1 - x0) + (y1 - y0) * (y1 - y0)).toFloat
   }
 
-  class Body(val mass: Float, val x: Float, val y: Float, val xSpeed: Float, val ySpeed: Float) {
+  class Body(val mass: Float, val x: Float, val y: Float, val xspeed: Float, val yspeed: Float) {
 
     def updated(quad: Quad): Body = {
       var netForceX = 0.0f
@@ -143,19 +141,21 @@ package object barneshut {
       def traverse(quad: Quad): Unit = (quad: Quad) match {
         case Empty(_, _, _) =>
           // no force
-        case Leaf(_, _, _, bodies) =>
+        case Leaf(_, _, _, bodies) => bodies foreach (body => addForce(body.mass, body.x, body.y))
           // add force contribution of each body by calling addForce
         case Fork(nw, ne, sw, se) =>
           // see if node is far enough from the body,
           // or recursion is needed
+          if (quad.size / distance(quad.massX, quad.massY, x, y) < theta) addForce(quad.mass, quad.massX, quad.massY)
+          else Seq(nw, ne, sw, se) foreach traverse
       }
 
       traverse(quad)
 
-      val nx = x + xSpeed * delta
-      val ny = y + ySpeed * delta
-      val nxspeed = xSpeed + netForceX / mass * delta
-      val nyspeed = ySpeed + netForceY / mass * delta
+      val nx = x + xspeed * delta
+      val ny = y + yspeed * delta
+      val nxspeed = xspeed + netForceX / mass * delta
+      val nyspeed = yspeed + netForceY / mass * delta
 
       new Body(mass, nx, ny, nxspeed, nyspeed)
     }
